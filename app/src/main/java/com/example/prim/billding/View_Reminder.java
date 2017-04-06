@@ -14,112 +14,62 @@ package com.example.prim.billding;
      for the AY 2015-2016”
 */
 /*
-    VERSION 1.7
+    VERSION 1.1
 
     {version number}  <author>  |date (format of MM/dd/yyyy)|
         [notes]
 
-    {1.0} <Anthony Cornell Dacoco> |01/29/2017|
-        [tried implementing everything, however the only thing that i didnt manage to implement
-        is the displaying of subtexts for listview, however displaying of only the reminder name
-        would work]
+    {1.0} <Arthur Yiu> |01/29/2017|
+    [Was able to create a complete and working add reminder activty class with UI]
 
-    {1.1} <Paul Matthew Sason> [01/31/2017]
-        [implemented listview that can show amount and date using the custom adapter, adjusted the UI]
+    {1.1} <Arthur Yiu> |01/29/2017|
+    [Made changes to remove leading and trailing whitespaces in reminder name and reminder description along with
+    changes to the activity_add_reminder.xml to only allow the alphabet, digits, and a period for user input in the
+    bill reminder name and bill reminder description]
 
-    {1.2} <Anthony Cornell Dacoco> |02/01/2017|
-        [made it so that when there are no reminders saved, will show that "there are no reminders
-        to show" since the initial implementation of this message was from the standard ArrayAdapter
-        and was using the non updated xml files]
+    {2.0} <Paul Matthew Sason |02/05/2017|
+    [to deal with commas messing up the csv, the way the database writes is now slightly modified,
+    instead of trying to filter commas out in the xml (which caused a really annoying problem with the enter button)]
+*/
 
-    {1.3} <Arthur Yiu> [02/01/2017]
-        [Linked the 2 activities together. (main_activity.java to add_reminder.java)]
-
-    {1.4} <Anthony Cornell Dacoco> |02/02/2017|
-        [moved the function calls to onResume from onCreate, changed the output format for the
-        reminder amount due]
-
-    {1.5} <Arthur Yiu> [02/02/2017]
-        [Made changes to add_reminder to remove leading and trailing whitespaces in reminder name and reminder description fields.]
-
-    {1.6} <Paul Matthew Sason> [02/02/2017]
-        [adjusted UI even more, used specific width and height values for better alignment, added comments]
-
-    {1.7} <Anthony Cornell Dacoco> [02/02/2017]
-        [made the indention into 5 spaces, added more comments to the code, added the license,
-        cleaned code from unneeded lines, comments and functions]
-
-    {1.8} <Arthur Yiu> [02/02/2017]
-        [Made changes to add_reminder to only allow the user to type in the alphabet along with digits in the reminder name
-        and reminder description fields.]
-
-    {2.0} <Paul Matthew Sason> [02/05/2017]
-    [due to minor changes in file writing (with regards to commas), file reading was modified accordingly]
- */
-
-import android.annotation.TargetApi;
-import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.Build;
-import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.text.Editable;
-import android.text.TextUtils;
-import android.text.TextWatcher;
+import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.MenuInflater;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
-import android.widget.Button;
-import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.Spinner;
 import android.widget.TextView;
-import android.app.Activity;
-import android.widget.TimePicker;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.lang.String;
+import java.lang.*;
 import java.text.DateFormat;
-import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.text.SimpleDateFormat;
-import java.text.ParseException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
-
-public class MainActivity extends AppCompatActivity {
-
-    //function for loading the file
-    //checks if reminder.txt exists
-    //if it exists, read data
-    //else create reminder.txt
-    //returns an array of strings, each element is a reminder line in reminder.txt
-
+/*
+    This is a class that enables the user to add a reminder to the database
+     It has its own xml file in which the user can input data in and when the save
+     button is pressed, the data is then gathered and save to the database.
+*/
+public class View_Reminder extends AppCompatActivity {
     public String[] loadFile(String fileName) {
         String[] reminderStrings = {""};
         File file = getBaseContext().getFileStreamPath(fileName);
@@ -169,7 +119,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return reminderArray;
     }
-
     //converts read string array read from data into a list of Reminder objects
     public ArrayList<Reminder> StringToReminder(String[] dbStrings) {
         ArrayList<Reminder> reminderList = new ArrayList<Reminder>();
@@ -201,8 +150,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return reminderList;
     }
-
-    //fileReading/writing for log
     public String[] loadPaidFile(String fileName) {
         String[] reminderStrings = {""};
         File file = getBaseContext().getFileStreamPath(fileName);
@@ -322,217 +269,123 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    //file reading for settings
-    public boolean fileExistence(String fname){
-        File file = getBaseContext().getFileStreamPath(fname);
-        return file.exists();
-    }
-    //file reading for setting up when the notification will be sent
-    public void readFile(String fname){
-         //default values for hour and min (7:00)
-        int hour = 7;
-        int min = 0;
-         //check if file exists
-        if(fileExistence(fname)){
-             //if it exists, try to open it and read its contents
-            try {
-                FileInputStream fin = openFileInput(fname);
-                int c;
-                String temp="";
-                while( (c = fin.read()) != -1){
-                    temp = temp + Character.toString((char)c);
-                }
-                String[] splitMe = temp.split(",");
-                hour = Integer.parseInt(splitMe[0]);
-                min = Integer.parseInt(splitMe[1]);
-            }
-            catch(Exception e){
-                e.printStackTrace();
-            }
-        }
-        else{
-             //if it doesn't exist, create a new file and write the default notification time
-            try{
-                FileOutputStream fOut = openFileOutput(fname, Context.MODE_PRIVATE); //opens the database file in write mode
-                String toWrite = "7,00";
-                fOut.write(toWrite.getBytes());
-                fOut.close();
-                readFile(fname);
-            }catch(Exception e){
-                e.printStackTrace();
-            }
-        }
-             //creation of alarm
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Add_Reminder.ALARM_SERVICE);    //alarmManager manages the alarm service
-         // Get a calendar instance and set its date to the values of hour and min. These 2 variables will either have the read from file value or the default value.
-        Calendar now = Calendar.getInstance();
-        Calendar calendar2 = Calendar.getInstance();
-        calendar2.set(Calendar.HOUR_OF_DAY,hour);
-        calendar2.set(Calendar.MINUTE,min);
-        calendar2.set(Calendar.SECOND,0);
-        long alarmTime=0;     //variable placeholder for comparing time values of calendar dates
-         //check whether a notification was already made or not
-        if(calendar2.getTimeInMillis()<=now.getTimeInMillis()){
-            alarmTime = calendar2.getTimeInMillis() + (AlarmManager.INTERVAL_DAY+1);
-        }
-        else{
-            alarmTime = calendar2.getTimeInMillis();
-        }
-          //setting up of actual alarm: create the intent and set an alarm that repeats everyday
-        PendingIntent pendingIntent = PendingIntent.getService(getApplicationContext(), 0, new Intent(getApplicationContext(),ReminderService.class),PendingIntent.FLAG_UPDATE_CURRENT);
-        alarmManager.setInexactRepeating(AlarmManager.RTC,alarmTime,AlarmManager.INTERVAL_DAY,pendingIntent);
-    }
+    //Declaration of variables used
+    TextView nameField, amountField, dateField, descriptionField, dueTag; //fields for the user to input data in
+    ImageView alert;
 
     ArrayList<Reminder> reminderArray = new ArrayList<Reminder>();
     String fileName = "reminders.txt";
     ListView listView;
     ReminderListAdapter adapter;
     String [] remArr;
+    int pos;
 
-     // Overriding of what the application does when it is created
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        readFile("settings.txt"); //call the function that sets the alarm
-    }
+        setContentView(R.layout.activity_view_reminder);
 
-    @Override
+        //findViewById(R.id.activity_add__reminder).setOnTouchListener(this);
+
+        //identification of xml elements
+
+    }
     public void onResume() {
         super.onResume();
-        setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        setContentView(R.layout.activity_view_reminder);
 
-        //remArr will hold the data read from reminders.db
-        remArr = loadFile(fileName);
-        //if remArr returns with length 0, meaning there are no reminders
-        //display that there are no reminders
-        if (remArr.length == 0) {
-            //String [] emptyDB = {"There are no reminders to show"};
-            TextView textView = (TextView) findViewById(R.id.error_emptyRem);
-            textView.setText("There are no reminders to show");
-        } else {
-            //remArr is now converted to List of Reminder objects
-            reminderArray = StringToReminder(remArr);
-            adapter = new ReminderListAdapter(this, reminderArray);
-            listView = (ListView) findViewById(R.id.reminder_list);
-            listView.setAdapter(adapter);
-            registerForContextMenu(listView);
-            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    remArr = loadFile(fileName);
-                    Bundle b = new Bundle(); //creates a bundle that serves as a placeholder for the data that will be sent to View_Reminder.java
-                    b.putInt("position", position); //places "position" in bundle which serves as an identifier for View_Reminder.java and position which holds the position of the chosen Reminder object
-                    b.putString("key", remArr[position]); //places "key" in bundle which serves as an identifier for View_Reminder.java abd renArr which contains the data to be passed
-                    Intent intent = new Intent(view.getContext(), View_Reminder.class); //creates an intent that enables the binding of the two activities
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); //to make the user return to the MainActivity even if the new Activity creates a sub Activity
-                    intent.putExtras(b); //add the data to the intent for later accessing of the new started activity
-                    startActivity(intent); //starts the View_Reminder activity
-                    adapter.notifyDataSetChanged(); //handles the update of the UI if a change in the database would happen (through edit,deletion or tagging as paid through View_Reminder activity)
-                }
-            });
+
+        Bundle b = this.getIntent().getExtras(); //creates a bundle to store the data given by MainActivity
+        final String array = b.getString("key"); //creates a String array to contain the data found in b
+        final int position = b.getInt("position");
+        pos = position;
+        remArr=loadFile(fileName);
+        String[] dataReminder = remArr[pos].split(",");
+        dataReminder[0] = dataReminder[0].replace("comma0", "comma");
+        dataReminder[0] = dataReminder[0].replace("comma1", ",");
+        dataReminder[1] = dataReminder[1].replace("comma0", "comma");
+        dataReminder[1] = dataReminder[1].replace("comma1", ",");
+
+        nameField = (TextView) findViewById(R.id.editText); //reminder name
+        nameField.setText(dataReminder[0]);
+        nameField.setClickable(false);
+        amountField = (TextView) findViewById(R.id.editText2); //reminder amount
+        amountField.setText(dataReminder[2]);
+        amountField.setClickable(false);
+        dateField = (TextView) findViewById(R.id.editText3); //reminder due date
+        dateField.setText(dataReminder[3]);
+        dateField.setClickable(false);
+        descriptionField = (TextView) findViewById(R.id.editText4); //reminder description
+        descriptionField.setText(dataReminder[1]);
+        //descriptionField.setClickable(false);
+        descriptionField.setMovementMethod(new ScrollingMovementMethod());
+
+        dueTag = (TextView) findViewById(R.id.alerttxt);
+        alert = (ImageView) findViewById(R.id.alert);
+
+		//the due date is parsed so that we can make a calendar instance of it
+		String[] dateparts = dataReminder[3].split("/");
+        Calendar c0 = Calendar.getInstance();
+        c0.set(Calendar.MONTH, Integer.parseInt(dateparts[0])-1);
+        c0.set(Calendar.DAY_OF_MONTH, Integer.parseInt(dateparts[1]));
+        c0.set(Calendar.YEAR, Integer.parseInt(dateparts[2]));
+        c0.set(Calendar.HOUR_OF_DAY,0);
+        c0.set(Calendar.MINUTE, 0);
+        c0.set(Calendar.SECOND, 0);
+        c0.set(Calendar.MILLISECOND, 0);
+        long dueDate = c0.getTimeInMillis();
+
+		//a calendar instance of the date today, for comparison
+        Calendar c1 = Calendar.getInstance();
+        c1.set(Calendar.HOUR_OF_DAY,0);
+        c1.set(Calendar.MINUTE, 0);
+        c1.set(Calendar.SECOND, 0);
+        c1.set(Calendar.MILLISECOND, 0);
+        long currentDate = c1.getTimeInMillis();
+		
+		//this makes a colored alert icon on the view screen depending on its due date
+		//similar to the reminderlist adapter, green = today, red = overdue, orange = within 3 days, transparent = non
+        if(dueDate == currentDate){
+            alert.setImageResource(R.drawable.green_alert);
+            dueTag.setText("    This bill is due today!");
         }
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab); //creates a floating action action for the user to press when they want to add a new reminder
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                remArr = loadFile(fileName);
-                Bundle b = new Bundle(); //creates a bundle that serves as a placeholder for the data that will be sent to add_reminder.java
-                b.putStringArray("key", remArr); //places "key" in bundle which serves as an identifier for add_reminder.java abd renArr which contains the data to be passed
-                Intent intent = new Intent(view.getContext(), Add_Reminder.class); //creates an intent that enables the binding of the two activities
-                intent.putExtras(b); //add the data to the intent for later accessing of the new started activity
-                startActivity(intent); //starts the add_reminder activity
-            }
-        });
+        else if (dueDate < currentDate){
+            alert.setImageResource(R.drawable.red_alert);
+            dueTag.setText("    This bill is overdue!");
+        }
+        else if ((dueDate > currentDate) && (currentDate >= dueDate - 259200000)) {
+            alert.setImageResource(R.drawable.oran_alert);
+            dueTag.setText("    This bill is due within 3 days");
+        }
+        else{
+            alert.setImageResource(R.drawable.trans_alert);
+            dueTag.setText(" ");
+        }
     }
-
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
+        getMenuInflater().inflate(R.menu.view_options, menu);
         return true;
     }
-
     public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            Intent intent = new Intent(this, SpinnerView.class);
-            startActivity(intent);
-            return true;
-        }
-        // if the user clicked on the help icon
-        if (id == R.id.action_help) {
-             //create a dialog filled with text views that teach the user how to use the application as well as developer information
-            Dialog dialog = new Dialog(MainActivity.this);
-            dialog.setContentView(R.layout.how_to_layout);
-            dialog.setTitle("Help");
-            TextView textView3 = (TextView) dialog.findViewById(R.id.textView3);
-            textView3.setText("BillDing! is a reminder application for your bills!");
-            TextView textView2 = (TextView) dialog.findViewById(R.id.textView2);
-            textView2.setText("BillDing! notifies you when you have a bill that is due within 3 days. Notifications are sent at 7 a.m. by default. You can change when you would like to receive notifications by pressing the settings icon.");
-            TextView howto1 = (TextView) dialog.findViewById(R.id.howto1);
-            howto1.setText("Press the + button to add a reminder.");
-            TextView howto2 = (TextView) dialog.findViewById(R.id.howto2);
-            howto2.setText("Tap a reminder to see more information about it. Here the selected reminder can be edited, deleted, or tagged as paid by pressing their respective icons. Alternatively, you can hold a reminder to edit, delete, or tag it as paid.");
-            TextView howto3 = (TextView) dialog.findViewById(R.id.howto3);
-            howto3.setText("Tap the log history icon to show bills that have been paid within the last 30 days.");
-            TextView howto4 = (TextView) dialog.findViewById(R.id.howto4);
-            howto4.setText("About us\nBillDing was developed by Paul Sason, Arthur Yiu, and Anthony Dacoco. (SYD)");
-            dialog.show();
-            return true;
-        }
-        if (id==R.id.log_history){
-            Bundle b = new Bundle(); //creates a bundle that serves as a placeholder for the data that will be sent to add_reminder.java
-            Intent intent = new Intent(this, ReminderHistory.class); //creates an intent that enables the binding of the two activities
-            this.startActivity(intent); //starts the add_reminder activity
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        MenuItem item= menu.findItem(R.id.action_settings);
-        //item.setVisible(false);
-        super.onPrepareOptionsMenu(menu);
-        return true;
-    }
-
-    //function to show reminder_options menu when a reminder is held long enough
-    //the menu has edit,delete or tag as paid as its choices
-    @Override
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo){
-        if (v.getId()==R.id.reminder_list) {
-            AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)menuInfo;
-            super.onCreateContextMenu(menu,v,menuInfo);
-            MenuInflater inflater = getMenuInflater();
-            inflater.inflate(R.menu.reminder_options,menu);
-            menu.setHeaderTitle(reminderArray.get(info.position).getName());
-        }
-    }
-    //function to catch the result of picking any of the choices from reminder_options menu and to follow through
-    @Override
-    public boolean onContextItemSelected(MenuItem item){
-        final AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
-        switch(item.getItemId()){
+        switch(id){
             //goes to Edit_Reminder activity by passing the reminderArray and the current position of the chosen reminder
             case R.id.edit:
                 remArr = loadFile(fileName);
                 Bundle b = new Bundle(); //creates a bundle that serves as a placeholder for the data that will be sent to edit_reminder.java
-                b.putInt("editThis", info.position); //will hold the current position of the chosen reminder in the database
+                b.putInt("editThis", pos); //will hold the current position of the chosen reminder in the database
                 b.putStringArray("reminderArray", remArr); //string version of the database
                 Intent intent = new Intent(this, Edit_Reminder.class); //creates an intent that enables the binding of the two activities
                 intent.putExtras(b); //add the data to the intent for later accessing of the new started activity
                 this.startActivity(intent); //starts the edit_reminder activity
+                finish();
                 return true;
-            //deletes the chosen reminder from the database and updates the activity adaptor
+            //deletes the chosen reminder from the database and goes back to the main menu if deleted
             case R.id.delete:
                 //confirmation dialog for deletion
                 DialogInterface.OnClickListener dialogClickListenerDelete=new DialogInterface.OnClickListener(){
@@ -543,7 +396,8 @@ public class MainActivity extends AppCompatActivity {
                                 String newline = "\n";
                                 String comma = ",";
                                 SimpleDateFormat dateFormat =  new SimpleDateFormat("MM/dd/yyyy");
-                                reminderArray.remove(info.position);
+                                reminderArray = StringToReminder(remArr);
+                                reminderArray.remove(pos);
                                 try {
                                     FileOutputStream fOut = openFileOutput(fileName, Context.MODE_PRIVATE); //opens the database file in write mode
                                     fOut.write(Integer.toString(reminderArray.size()).getBytes()); //writes the current number of reminders
@@ -565,12 +419,7 @@ public class MainActivity extends AppCompatActivity {
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
-                                if (reminderArray.size() == 0) {
-                                    //String [] emptyDB = {"There are no reminders to show"};
-                                    TextView textView = (TextView) findViewById(R.id.error_emptyRem);
-                                    textView.setText("There are no reminders to show");
-                                }
-                                adapter.notifyDataSetChanged();
+                                finish();
                                 break;
                             case DialogInterface.BUTTON_NEGATIVE:
                                 Toast.makeText(getBaseContext(), "Deletion Cancelled", Toast.LENGTH_SHORT).show();
@@ -582,21 +431,21 @@ public class MainActivity extends AppCompatActivity {
                 confirmDelete.setMessage("Are you sure you want to delete this bill?").setPositiveButton("Yes",dialogClickListenerDelete).setNegativeButton("No",dialogClickListenerDelete).show();
                 return true;
             //converts the reminder object into a reminder_paid objects, deletes the reminder from the reminders.txt database and
-            //writes the reminder_paid object into the history.txt database
+            //writes the reminder_paid object into the history.txt database and returns to main menu if tagged as paid
             case R.id.paid:
-                //confirmation of tagging as paid
                 DialogInterface.OnClickListener dialogClickListenerPaid=new DialogInterface.OnClickListener(){
                     @Override
                     public void onClick(DialogInterface dialog, int which){
                         switch (which){
                             case DialogInterface.BUTTON_POSITIVE:
-                                Log.v("getID",Integer.toString(info.position));
+                                Log.v("getID",Integer.toString(pos));
                                 Log.v("getID",Integer.toString(reminderArray.size()));
                                 String newline = "\n";
                                 String comma = ",";
                                 SimpleDateFormat dateFormat =  new SimpleDateFormat("MM/dd/yyyy");
-                                writeToPaid(reminderArray,info.position); //updates the history.txt database
-                                reminderArray.remove(info.position); //removes the chosen reminder in the reminderArray
+                                reminderArray = StringToReminder(remArr);
+                                writeToPaid(reminderArray,pos); //updates the history.txt database
+                                reminderArray.remove(pos); //removes the chosen reminder in the reminderArray
                                 //updates the reminder.txt database with the removed reminder
                                 try {
                                     FileOutputStream fOut = openFileOutput(fileName, Context.MODE_PRIVATE); //opens the database file in write mode
@@ -607,8 +456,7 @@ public class MainActivity extends AppCompatActivity {
                                         fOut.write(comma.getBytes()); //writes a comma
                                         fOut.write(reminderArray.get(i).getDesc().getBytes()); //writes the reminder description if any
                                         fOut.write(comma.getBytes()); //writes a comma
-                                        DecimalFormat format = new DecimalFormat("0.00");
-                                        fOut.write(format.format(reminderArray.get(i).getAmt()).getBytes()); //writes the reminder amount
+                                        fOut.write(Double.toString(reminderArray.get(i).getAmt()).getBytes()); //writes the reminder amount
                                         fOut.write(comma.getBytes()); //writes a comma
                                         String date = dateFormat.format(reminderArray.get(i).getDate());
                                         fOut.write(date.getBytes()); //writes the reminder due date
@@ -619,12 +467,7 @@ public class MainActivity extends AppCompatActivity {
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
-                                if (reminderArray.size() == 0) {
-                                    //String [] emptyDB = {"There are no reminders to show"};
-                                    TextView textView = (TextView) findViewById(R.id.error_emptyRem);
-                                    textView.setText("There are no reminders to show");
-                                }
-                                adapter.notifyDataSetChanged();
+                                finish();
                                 break;
                             case DialogInterface.BUTTON_NEGATIVE:
                                 Toast.makeText(getBaseContext(), "Paid Confirmation Cancelled", Toast.LENGTH_SHORT).show();
@@ -639,6 +482,6 @@ public class MainActivity extends AppCompatActivity {
                 return super.onContextItemSelected(item);
         }
     }
-}
 
+}
 

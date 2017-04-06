@@ -10,23 +10,23 @@
                 android:paddingRight="@dimen/activity_horizontal_margin"
                 android:paddingTop="@dimen/activity_vertical_margin"
                 app:layout_behavior="@string/appbar_scrolling_view_behavior"
-                tools:context="com.example.prim.billding.MainActivity"
-                tools:showIn="@layout/activity_main">
+                tools:context="com.example.prim.billding.ReminderHistory"
+                tools:showIn="@layout/reminder_history">
 
-    <TextView
-        android:id="@+id/error_emptyRem"
-        android:layout_width="256dp"
-        android:layout_height="wrap_content"
-        android:padding="10sp"
-        android:textSize="18sp"
-        android:textStyle="bold">
-    </TextView>
+     <TextView
+         android:id="@+id/error_emptyRem"
+         android:layout_width="256dp"
+         android:layout_height="wrap_content"
+         android:padding="10sp"
+         android:textSize="18sp"
+         android:textStyle="bold">
+     </TextView>
 
-    <!---Reminder List-->
-    <ListView
-        android:id="@+id/reminder_list"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true" />
+     <!---Reminder List-->
+     <ListView
+         android:id="@+id/reminder_history"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_alignParentStart="true"
+         android:layout_alignParentTop="true" />
 </RelativeLayout>
